@@ -1,0 +1,73 @@
+import React, { useState } from 'react';
+import { url } from '../constants/serverInfo';
+
+const DeleteLogger = ({ macId, type, onDeleteSuccess }) => {
+    const [isDeleting, setIsDeleting] = useState(false);
+    const [showConfirm, setShowConfirm] = useState(false);
+    const [error, setError] = useState('');
+
+    const handleDelete = async () => {
+        setIsDeleting(true);
+        setError('');
+
+        try {
+            const response = await fetch(`${url}/devices/${macId}/${type}`, {
+                method: 'DELETE',
+            });
+
+            const data = await response.json();
+
+            if (!response.ok) {
+                throw new Error(data.message || 'Failed to delete logger');
+            }
+
+            // Success!
+            alert('Logger deleted successfully');
+            if (onDeleteSuccess) onDeleteSuccess();
+            setShowConfirm(false);
+        } catch (err) {
+            setError(err.message);
+        } finally {
+            setIsDeleting(false);
+        }
+    };
+
+    return (
+        <div className="mt-4 p-4 border border-red-100 bg-red-50 rounded-lg">
+            {!showConfirm ? (
+                <button
+                    onClick={() => setShowConfirm(true)}
+                    className="text-red-600 hover:text-red-800 text-sm font-semibold flex items-center transition-colors"
+                >
+                    🗑️ Remove Logger from System
+                </button>
+            ) : (
+                <div className="space-y-3">
+                    <p className="text-sm text-red-700 font-medium">
+                        Are you sure? This will permanently delete the logger for {macId}.
+                    </p>
+                    <div className="flex space-x-3">
+                        <button
+                            disabled={isDeleting}
+                            onClick={handleDelete}
+                            className={`px-3 py-1.5 bg-red-600 text-white text-xs rounded hover:bg-red-700 transition ${
+                                isDeleting ? 'opacity-50 cursor-not-allowed' : ''
+                            }`}
+                        >
+                            {isDeleting ? 'Deleting...' : 'Yes, Delete'}
+                        </button>
+                        <button
+                            onClick={() => setShowConfirm(false)}
+                            className="px-3 py-1.5 bg-gray-200 text-gray-700 text-xs rounded hover:bg-gray-300 transition"
+                        >
+                            Cancel
+                        </button>
+                    </div>
+                    {error && <p className="text-xs text-red-600 mt-2 font-bold">{error}</p>}
+                </div>
+            )}
+        </div>
+    );
+};
+
+export default DeleteLogger;
